@@ -1,0 +1,119 @@
+{
+    "name": "microscrap/scrapyard-usb",
+    "description": "USB connection drivers for the ScrapyardIO GPIO framework: MPSSE digital, I2C and SPI plus FTDI UART over ext-ftdi",
+    "type": "library",
+    "version": "0.8.0",
+    "keywords": [
+        "scrapyard-io",
+        "gpio",
+        "usb",
+        "ftdi",
+        "mpsse",
+        "drivers"
+    ],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Angel Gonzalez",
+            "email": "angel@projectsaturnstudios.com"
+        }
+    ],
+    "require": {
+        "php": "^8.4|^8.5|^8.6",
+        "ext-ftdi": "^0.8.0",
+        "gpio/contracts": "^0.8.0",
+        "gpio/digital": "^0.8.0",
+        "gpio/i2c": "^0.8.0",
+        "gpio/nuts-and-bolts": "^0.8.0",
+        "gpio/spi": "^0.8.0",
+        "gpio/uart": "^0.8.0",
+        "microscrap/ftdi": "^0.8.0",
+        "microscrap/mpsse": "^0.8.0",
+        "venusian-voyager/nuts-and-bolts": "^0.8.0"
+    },
+    "require-dev": {
+        "pestphp/pest": "^4",
+        "venusian-voyager/config": "^0.8.0",
+        "venusian-voyager/vessel": "^0.8.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Microscrap\\ScrapyardUSB\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Microscrap\\ScrapyardUSB\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "0.8.x-dev"
+        },
+        "venusian": {
+            "providers": [
+                "Microscrap\\ScrapyardUSB\\Providers\\ScrapyardUSBServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "repositories": [
+        {
+            "type": "path",
+            "url": "/Volumes/ProjectSaturnStudios/Development/PHP/ProjectSaturnStudios/dev/scrapyard-io/framework/src/GeneralPurposeIO/*",
+            "options": {
+                "symlink": true,
+                "versions": {
+                    "gpio/contracts": "0.8.0",
+                    "gpio/digital": "0.8.0",
+                    "gpio/i2c": "0.8.0",
+                    "gpio/integrated-circuits": "0.8.0",
+                    "gpio/nuts-and-bolts": "0.8.0",
+                    "gpio/pwm": "0.8.0",
+                    "gpio/spi": "0.8.0",
+                    "gpio/uart": "0.8.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "/Volumes/ProjectSaturnStudios/Development/PHP/ProjectSaturnStudios/dev/venusian/framework/src/Voyager/*",
+            "options": {
+                "symlink": true,
+                "versions": {
+                    "venusian-voyager/collections": "0.8.8",
+                    "venusian-voyager/conditionable": "0.8.8",
+                    "venusian-voyager/config": "0.8.8",
+                    "venusian-voyager/contracts": "0.8.8",
+                    "venusian-voyager/io-pools": "0.8.8",
+                    "venusian-voyager/macroable": "0.8.8",
+                    "venusian-voyager/magic-aliases": "0.8.8",
+                    "venusian-voyager/nuts-and-bolts": "0.8.8",
+                    "venusian-voyager/reflection": "0.8.8",
+                    "venusian-voyager/vessel": "0.8.8"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "/Volumes/ProjectSaturnStudios/Development/PHP/ProjectSaturnStudios/dev/microscrap/ftdi",
+            "options": {
+                "symlink": true
+            }
+        },
+        {
+            "type": "path",
+            "url": "/Volumes/ProjectSaturnStudios/Development/PHP/ProjectSaturnStudios/dev/microscrap/mpsse",
+            "options": {
+                "symlink": true
+            }
+        }
+    ]
+}
