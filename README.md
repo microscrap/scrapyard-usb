@@ -1,24 +1,41 @@
-# scrapyard-usb
+# microscrap/scrapyard-usb
 
-The `usb` driver for [`scrapyard-io/framework`](https://github.com/scrapyard-io/framework): talk I2C, SPI, GPIO and serial through an FTDI USB board, such as the FT232H, from any computer.
+[![Tests](https://github.com/microscrap/scrapyard-usb/actions/workflows/tests.yml/badge.svg)](https://github.com/microscrap/scrapyard-usb/actions/workflows/tests.yml)
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/microscrap/scrapyard-usb.svg)](https://packagist.org/packages/microscrap/scrapyard-usb)
+[![License](https://img.shields.io/packagist/l/microscrap/scrapyard-usb.svg)](LICENSE)
+[![Requires ext-ftdi](https://img.shields.io/badge/ext--ftdi-%5E0.9-777bb4?logo=php&logoColor=white)](https://github.com/php-io-extensions/ftdi)
 
-`microscrap/scrapyard-usb` plugs into the framework's protocol managers, so `I2C::driver('usb')`, `SPI::driver('usb')`, `DigitalIO::driver('usb')` and `UART::driver('usb')` work through an FTDI chip. I2C, SPI and GPIO run over MPSSE, and UART uses the chip's serial mode. Chip drivers written against the framework's transports work unchanged on it, so a sensor can be developed on a laptop and deployed to a Raspberry Pi.
+The FTDI adapter for [`scrapyard-io/framework`](https://github.com/scrapyard-io/framework): the `usb` driver for I2C, SPI, digital pins and UART over an FTDI USB board such as the FT232H. It works on any machine with a USB port, including a Mac.
+
+```
+ext-ftdi                        1:1 libftdi1 and libmpsse calls
+  → microscrap/{ftdi,mpsse}     PHP bindings
+    → microscrap/scrapyard-usb  the `usb` driver per protocol   ← this package
+      → scrapyard-io/framework  managers, transports, the event loop and via()
+```
+
+| Protocol | Engine | Device names |
+|---|---|---|
+| I2C, SPI, digital | MPSSE | `ft232h`, `ft2232hl-a`, `ft2232hl-b`, `ft4232hl-a` … `ft4232hl-d` |
+| UART | FTDI serial | product name (`ft232h`, `ft2232h`, `ft4232h`, `ft232r`, `ft230x`, …) or USB product id (`0x6014`) |
+
+There is no PWM driver.
 
 ## Requirements
 
-- macOS or Linux
-- PHP 8.4 or newer with `ext-ftdi` loaded
-- A Venusian application with `scrapyard-io/framework` 0.8
-- An FTDI board. On Linux, your user needs permission to open it, usually through a udev rule.
+- PHP 8.4 or newer, on Linux or macOS
+- libftdi1 and libusb-1.0:
+  - Debian and Ubuntu: `apt install libftdi1-dev libusb-1.0-0-dev pkg-config`
+  - macOS: `brew install libftdi`
+- [`ext-ftdi`](https://github.com/php-io-extensions/ftdi) 0.9: `pie install php-io-extensions/ftdi`
+- `scrapyard-io/framework` 0.9, or just the `gpio/*` components it is split into
+- On Linux, access to the USB device. For example, add `/etc/udev/rules.d/99-ftdi.rules`:
 
-Boards are named by their USB chip:
+  ```
+  SUBSYSTEM=="usb", ATTR{idVendor}=="0403", MODE="0660", GROUP="plugdev"
+  ```
 
-| Protocols | Names |
-|---|---|
-| I2C, SPI, digital | `ft232h`, `ft2232hl-a`, `ft2232hl-b`, `ft4232hl-a` to `ft4232hl-d` (the suffix picks the chip's interface) |
-| UART | `ft232h`, `ft232r`, `ft230x`, `ft2232h`, `ft4232h`, `ft4232hp`, `ft4232ha`, or the USB product ID such as `0x6014` |
-
-The driver opens the first attached board with that name's USB product ID.
+  Then reload udev and add your user to `plugdev`. When libftdi opens an interface it detaches the kernel's `ftdi_sio` driver, so the board's `/dev/ttyUSB` node disappears while this adapter holds it.
 
 ## Installation
 
@@ -26,170 +43,79 @@ The driver opens the first attached board with that name's USB product ID.
 composer require microscrap/scrapyard-usb
 ```
 
-The service provider is discovered automatically. It registers a `usb` driver on the I2C, SPI, DigitalIO and UART managers. PWM has no `usb` driver.
+The service provider is discovered automatically and registers `usb` on the DigitalIO, I2C, SPI and UART managers. Make it the default in `config/gpio.php`, or name it at each call.
 
-Name the driver in each call, or make it the default in `config/gpio.php`:
+## Usage
 
-```php
-'protocols' => [
-    'i2c' => ['default' => 'usb'],
-    'spi' => ['default' => 'usb'],
-    'uart' => ['default' => 'usb'],
-    'digital-in' => ['default' => 'usb'],
-],
-```
+An FT232H runs one of these at a time, so each example below is a separate board, or the same board after `disconnect()`.
 
-## Quick start
-
-An accelerometer at `0x53` on an FT232H:
+SPI, with chip select on D4 (`0`) and a data/command pin on D5 (`1`):
 
 ```php
-use GeneralPurposeIO\I2C\I2C;
+use GeneralPurposeIO\Contracts\SPI\SPIMode;
 
-$accelerometer = I2C::driver('usb')
-    ->connectTo('ft232h')
-    ->register()
-    ->device('ft232h', 0x53);
-
-$accelerometer->probe();                    // true when it answers
-$id = $accelerometer->writeRead([0x00], 1);  // [0xE5]
+$panel = app('gpio.spi')->driver('usb')->connectTo('ft232h')->mode(SPIMode::MODE_0)->speed(10_000_000)->register()->device('ft232h', 0);
+$dc = app('gpio.digital')->driver('usb')->output('ft232h', 1);
 ```
 
-## One mode per board
-
-MPSSE runs a board interface in one mode at a time: I2C, SPI or plain GPIO. Connect it once, with the protocol you need:
-
-- **I2C or SPI.** `connectTo()` → `register()` opens the board in that mode, and also registers it with the `usb` DigitalIO driver. The GPIO lines the protocol doesn't use are then ready as pins, with no separate connection.
-- **Only pins.** Connect the board through DigitalIO instead:
+I2C:
 
 ```php
-use GeneralPurposeIO\Digital\DigitalIO;
-
-$board = DigitalIO::driver('usb')->connectTo('ft232h')->register();
+$sensor = app('gpio.i2c')->driver('usb')->connectTo('ft232h')->register()->device('ft232h', 0x76);
+$id = $sensor->writeRead([0xD0], 1);
 ```
 
-Connecting DigitalIO to a board that I2C or SPI already registered throws.
-
-## I2C
+Serial, on the chip's UART engine:
 
 ```php
-use GeneralPurposeIO\I2C\I2C;
-use Microscrap\Bindings\MPSSE\Enums\MPSSEClockRate;
-
-$bus = I2C::driver('usb')
-    ->connectTo('ft232h')
-    ->clockRate(MPSSEClockRate::FOUR_HUNDRED_KHZ)   // the default
-    ->register();
-
-$display = $bus->device('ft232h', 0x3C);
-$accelerometer = $bus->device('ft232h', 0x53);
+$radio = app('gpio.uart')->driver('usb')->connectTo('ft232h')->baud(115_200)->register()->device('ft232h');
+$radio->write("AT+VER?\r\n");
+$reply = $radio->readUntil("\r\n", timeout_ms: 1000);
 ```
 
-The bus lines are D0 (SCL) and D1 and D2 tied together (SDA).
+The framework's README covers the transports, the event loop and `via()`. What this adapter adds:
 
-- `probe()` sends the device's address and reports whether it acknowledged.
-- `writeRead()` writes, then reads after a repeated start.
-- `bulkWrite()` sends several writes in one transaction.
-- `read()` returns `false`, and `write()` returns `-1`, when the device doesn't acknowledge.
+### One engine per interface
 
-`endianness()` is also available on the connection.
+An FTDI interface runs its MPSSE engine or its UART engine, never both. Once one is registered, opening the other on the same interface throws `GPIOLevelException::ftdiEngineBusy` before any USB traffic. `disconnect()` frees the interface for the other engine.
 
-## SPI
+A UART on an FT2232H or FT4232H uses interface A, the same interface as `ft2232hl-a` / `ft4232hl-a`.
 
-```php
-use GeneralPurposeIO\SPI\SPI;
-use Microscrap\Bindings\MPSSE\Enums\MPSSEClockRate;
+### Shared MPSSE context
 
-$panel = SPI::driver('usb')
-    ->connectTo('ft232h')
-    ->mode(0)
-    ->clockRate(MPSSEClockRate::TEN_MHZ)
-    ->register()
-    ->device('ft232h', 0);
-```
+I2C and SPI open the interface and hand it to the `usb` digital driver, so the spare lines are pins at once with no `connectTo()`. Connect I2C or SPI first: SPI refuses an interface the digital driver opened on its own.
 
-The bus lines are D0 (SCK), D1 (MOSI), D2 (MISO) and D3 (CS). Set the bus speed with `clockRate()`, from 100 kHz to 60 MHz, 400 kHz by default. The framework's `speed()` has no effect on this driver. `mode()` and `endianness()` work as usual.
+### Digital pins
 
-D3 goes low for every transfer. The transport also drives the GPIO line numbered like the chip select low for the transfer and high after it: chip select 0 uses GPIOL0, chip select 1 uses GPIOL1. That line becomes an output, so don't use it for anything else.
+- FTDI pins have no interrupt, so edges are level changes between samples.
+- A watched input is sampled on a loop timer every 10 ms; set another interval with `pollEvery($ms)`. Blocking `listen()` samples at the same interval.
 
-`write()` and `read()` are half duplex. `transfer()` is full duplex.
+### I2C
 
-## Digital pins
+- The default clock is 400 kHz; set another with `connectTo('ft232h')->clockRate(MPSSEClockRate::ONE_MHZ)`.
+- Framing matches Linux `I2C_RDWR`: `writeRead()` uses a repeated START, and `bulkWrite()` puts each chunk behind its own START with one STOP at the end.
 
-```php
-use GeneralPurposeIO\Digital\DigitalIO;
+### SPI
 
-$pins = DigitalIO::driver('usb');   // the board is already registered by I2C or SPI
+- Chip selects are pins: 0-3 are D4-D7, and 4-11 are C0-C7. D3, the engine's own chip select, stays high.
+- Every chip select starts high when the bus registers. A pin used as a chip select is an output from then on.
+- The bus clock comes from `speed($hz)` on the connection, or from `clockRate()` (default 400 kHz). `speed($hz)` on a slave gives it its own clock, and the engine switches clocks between slaves as needed.
 
-$dc = $pins->output('ft232h', 1);
-$reset = $pins->output('ft232h', 2);
-$interrupt = $pins->input('ft232h', 3);
+### UART
 
-$reset->low();
-usleep(10_000);
-$reset->high();
-```
+- Reads are sized to 10 ms of line data, so a device that streams constantly cannot hold a caller or the loop.
+- Sends are asynchronous USB transfers, and a send that wrote less than it was given throws.
+- A device unplugged mid-read throws instead of returning silence.
+- A watched port is sampled every 10 ms, because USB completions cannot wake the event loop.
+- `dtr()` and `rts()` drive the modem lines. Both are released when the port opens.
+- `close()` waits up to a second for a running send to finish.
 
-| Pin number | Line | FT232H label |
-|---|---|---|
-| 0–3 | GPIOL0–GPIOL3 | D4–D7 |
-| 4–11 | GPIOH0–GPIOH7 | C0–C7 |
+### Offloading
 
-The first `output()` or `input()` for a pin sets its direction, and later calls return the same transport. Asking for a pin in the other direction throws. `input()` accepts a bias and `active_low`, but MPSSE lines have neither, so both are ignored.
-
-Inputs are sampled over USB:
-
-- `read()` reads the pin now.
-- `pollEdges()` compares the pin with its last reading and reports at most one edge. The first call only takes a reading.
-- `listen($timeout_ms)` reads the pin every millisecond until it changes, and returns `null` on timeout. A negative timeout returns `null` straight away.
-
-Edge timestamps are the host's `hrtime()` at the moment the change was seen.
-
-## UART
-
-```php
-use GeneralPurposeIO\UART\UART;
-
-$radar = UART::driver('usb')
-    ->connectTo('ft232h')
-    ->baud(256_000)
-    ->register()
-    ->device('ft232h');
-
-$radar->write([0xFD, 0xFC, 0xFB, 0xFA]);
-$bytes = $radar->pollBytes();   // whatever has arrived, or ''
-```
-
-Opening the board puts it in serial mode and sets the baud rate, data bits, parity, stop bits and flow control. It also sets the latency timer to 1 ms, so short replies arrive promptly, and discards anything already buffered.
-
-`pollBytes()` reads what has arrived, spending at most about a millisecond. `flush()` discards buffered data. `path()` returns `usb:` followed by the libftdi handle.
-
-A single-interface board like the FT232H can be in serial mode or MPSSE mode, not both. Use one per board.
-
-## Closing
-
-`close()` on an I2C, SPI or pin transport closes the board's MPSSE connection, which ends it for every transport on that board. Close a board's transports only when you're finished with all of them. `close()` on a UART transport closes that serial connection.
-
-## The gpio dock
-
-Input pins and serial ports never block when the framework's `gpio` dock resource polls them, so they can go straight onto it:
-
-```php
-use GeneralPurposeIO\Core\MagicAliases\GPIO;
-
-GPIO::watch($interrupt, rising: true);   // DigitalEdgeOccurrence per edge
-GPIO::receive($radar);                   // UARTBytesOccurrence per batch of bytes
-```
-
-Each tick samples a watched pin once, so a pulse shorter than the time between ticks can be missed.
-
-## Errors
-
-Failures throw the framework's protocol exceptions, such as `I2CException`, `SPIException`, `DigitalIOException` and `UARTException`. They all extend `GPIOLevelException`. Typical causes are:
-
-- The device name isn't a supported board.
-- The board isn't attached, or can't be opened. The message includes libftdi's or libmpsse's error text.
-- A serial setting is refused.
+libusb holds the device for this process, so `via()` jobs cannot move to another process:
+- A job runs in a loop fiber against the real device.
+- Its USB traffic takes turns with everything else on the interface.
+- `via()` accepts no target name.
 
 ## Testing
 
@@ -198,7 +124,9 @@ composer install
 vendor/bin/pest
 ```
 
-The suite needs no hardware.
+The suite uses scripted serial and MPSSE links and recorded command streams, so it runs without a board.
+
+`tests/Digital/Ft232hDigitalIOTest.php` drives all twelve pins of a real FT232H with nothing wired to them. When no board answers it skips itself.
 
 ## License
 

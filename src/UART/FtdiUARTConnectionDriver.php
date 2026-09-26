@@ -2,29 +2,43 @@
 
 namespace Microscrap\ScrapyardUSB\UART;
 
-use Ftdi\FTDIContext;
 use GeneralPurposeIO\Contracts\UART\UARTException;
-use GeneralPurposeIO\Contracts\UART\UARTTransport;
 use GeneralPurposeIO\UART\UARTConnectionDriver;
+use Microscrap\ScrapyardUSB\BridgeMode;
+use Microscrap\ScrapyardUSB\FtdiBridge;
 
 class FtdiUARTConnectionDriver extends UARTConnectionDriver
 {
-
+    /** Refused before any USB is touched when MPSSE already runs the interface. */
     protected function newConnection(string $device): FtdiUARTConnectionFactory
     {
-        if(!is_null(FtdiUARTConnectionFactory::product($device)))
-        {
-            return new FtdiUARTConnectionFactory($device, $this);
-        }
+        $product = FtdiUARTConnectionFactory::product($device) ?? throw UARTException::invalidFtdiDevice($device);
 
-        throw new UARTException("Invalid FTDI device {$device}");
+        FtdiBridge::ensureFree(FtdiUARTConnectionFactory::bridge($product), BridgeMode::UART);
+
+        return new FtdiUARTConnectionFactory($device, $this);
     }
 
-    protected function getTransport(int|string $device): UARTTransport
+    /** @param FtdiPort $handle */
+    public function register(string $name, mixed $handle): static
     {
-        /** @var FTDIContext $handle */
-        $handle = $this->connections->get($device);
+        FtdiBridge::claim($handle->bridge, BridgeMode::UART);
 
-        return new FtdiUARTTransport($handle);
+        return parent::register($name, $handle);
+    }
+
+    protected function getTransport(string $device): FtdiUARTTransport
+    {
+        /** @var FtdiPort $port */
+        $port = $this->connections->get($device);
+
+        return new FtdiUARTTransport($device, $port->baud, $port->link, $port->bridge);
+    }
+
+    /** @param FtdiPort $handle */
+    protected function closeConnection(mixed $handle): void
+    {
+        $handle->link->close();
+        FtdiBridge::release($handle->bridge, BridgeMode::UART);
     }
 }

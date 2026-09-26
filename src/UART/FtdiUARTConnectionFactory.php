@@ -21,7 +21,7 @@ class FtdiUARTConnectionFactory extends UARTConnectionFactory
 
     protected function device(): FtdiProductId
     {
-        return static::product($this->device) ?? throw new UARTException("Invalid FTDI device {$this->device}");
+        return static::product($this->device) ?? throw UARTException::invalidFtdiDevice($this->device);
     }
 
     /**
@@ -43,19 +43,27 @@ class FtdiUARTConnectionFactory extends UARTConnectionFactory
         return ctype_digit($device) ? FtdiProductId::tryFrom((int) $device) : null;
     }
 
-    protected function getHandle(): FTDIContext
+    /**
+     * The name an MPSSE driver uses for the same interface. libftdi opens interface A, so a UART on an FT2232H or
+     * FT4232H shares it with MPSSE channel A; a chip with no MPSSE engine can never collide.
+     */
+    public static function bridge(FtdiProductId $product): string
     {
+        return match ($product) {
+            FtdiProductId::FT232H => 'ft232h',
+            FtdiProductId::FT2232H => 'ft2232hl-a',
+            FtdiProductId::FT4232H => 'ft4232hl-a',
+            default => strtolower($product->name),
+        };
+    }
+
+    protected function getHandle(): FtdiPort
+    {
+        // ftdi_new() allocates and initialises the context: a second ftdi_init() would leak its read buffer
         $context = ftdi_new();
 
-        if ($context->handle < 0) {
-            throw UARTException::couldNotOpenUARTPort($this->device()->value);
-        }
-
-        if (ftdi_init($context) !== 0) {
-            $error = ftdi_get_error_string($context);
-            ftdi_free($context);
-
-            throw UARTException::couldNotConfigureFtdiDevice($this->device()->name, 'initialization', $error);
+        if ($context->handle <= 0) {
+            throw UARTException::couldNotOpenUARTPort($this->device);
         }
 
         if (ftdi_usb_open($context, FtdiVendorId::FTDI->value, $this->device()->value) !== 0) {
@@ -71,23 +79,19 @@ class FtdiUARTConnectionFactory extends UARTConnectionFactory
         $this->assertConfigured(
             $context,
             'line properties',
-            ftdi_set_line_property(
-                $context,
-                $this->data_bits->value,
-                $this->ftdiStopBits(),
-                $this->parity->value,
-            ),
+            ftdi_set_line_property($context, $this->data_bits->value, $this->ftdiStopBits(), $this->parity->value),
         );
-        $this->assertConfigured($context, 'flow control', ftdi_setflowctrl($context, $this->ftdiFlowControl()));
-
-        // 1ms latency keeps short USB bulk reads responsive for sensors like LD2410C.
-        if (function_exists('ftdi_set_latency_timer')) {
-            $this->assertConfigured($context, 'latency timer', ftdi_set_latency_timer($context, 1));
-        }
-
+        // XON/XOFF needs its two characters: flow control 0x400 alone would stop and start on 0x00
+        $this->assertConfigured($context, 'flow control', $this->flow_control === FlowControl::SOFTWARE
+            ? ftdi_setflowctrl_xonxoff($context, 0x11, 0x13)
+            : ftdi_setflowctrl($context, $this->ftdiFlowControl()));
+        // 1 ms latency: an empty read comes back after 1 ms, which bounds how long a loop sample holds the loop
+        $this->assertConfigured($context, 'latency timer', ftdi_set_latency_timer($context, 1));
+        // DTR and RTS released: a module wired to reset on DTR (the bench's RYLR998 on D4) boots, whatever the last run left
+        $this->assertConfigured($context, 'modem lines', ftdi_setdtr_rts($context, 0, 0));
         ftdi_usb_purge_buffers($context);
 
-        return $context;
+        return new FtdiPort(new FtdiSerialLink($context), $this->baud_rate, static::bridge($this->device()));
     }
 
     private function ftdiStopBits(): int

@@ -2,12 +2,14 @@
 
 namespace Microscrap\ScrapyardUSB\Digital;
 
+use GeneralPurposeIO\Contracts\Digital\DigitalIOException;
 use GeneralPurposeIO\Digital\DigitalOutputTransport;
 use Microscrap\Bindings\MPSSE\MPSSEContext;
+use Microscrap\ScrapyardUSB\Mpsse\RunsOnTheUsbPump;
 
 class MpsseDigitalOutputTransport extends DigitalOutputTransport
 {
-    protected array $line_values = [];
+    use RunsOnTheUsbPump;
 
     public function __construct(
         int $pin,
@@ -18,16 +20,30 @@ class MpsseDigitalOutputTransport extends DigitalOutputTransport
 
     public function read(): bool
     {
-        $value = mpsse_pin_state($this->context, $this->pin, mpsse_read_pins($this->context)) == 1;
+        $this->ensureOpen();
 
-        return $this->line_values[$this->pin] = $value;
+        $pins = $this->transact(
+            $this->context,
+            fn (): int => mpsse_read_pins($this->context),
+            fn (?array $reply): int => is_null($reply) || strlen($reply[1]) !== 2 ? -1 : ord($reply[1][0]) | (ord($reply[1][1]) << 8),
+        );
+
+        if ($pins < 0) {
+            throw DigitalIOException::pinsReadFailed($this->pin);
+        }
+
+        return mpsse_pin_state($this->context, $this->pin, $pins) === 1;
     }
 
     public function write(bool $state): bool
     {
-        $written = $state
-            ? mpsse_pin_high($this->context, $this->pin)
-            : mpsse_pin_low($this->context, $this->pin);
+        $this->ensureOpen();
+
+        $written = $this->transact(
+            $this->context,
+            fn (): int => $state ? mpsse_pin_high($this->context, $this->pin) : mpsse_pin_low($this->context, $this->pin),
+            fn (?array $reply): int => is_null($reply) ? -1 : 0,
+        );
 
         if ($written !== 0) {
             return false;
@@ -36,8 +52,6 @@ class MpsseDigitalOutputTransport extends DigitalOutputTransport
         return $this->read() === $state;
     }
 
-    public function close(): void
-    {
-        mpsse_close($this->context);
-    }
+    /** The context belongs to the connection; disconnect() closes it. */
+    protected function release(): void {}
 }

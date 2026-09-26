@@ -3,8 +3,6 @@
 namespace Microscrap\ScrapyardUSB\I2C;
 
 use GeneralPurposeIO\Contracts\I2C\I2CException;
-use GeneralPurposeIO\Digital\DigitalIO;
-use GeneralPurposeIO\I2C\I2CConnectionDriver;
 use GeneralPurposeIO\I2C\I2CConnectionFactory;
 use Microscrap\Bindings\FTDI\Enums\FtdiVendorId;
 use Microscrap\Bindings\MPSSE\Enums\MPSSEClockRate;
@@ -12,7 +10,6 @@ use Microscrap\Bindings\MPSSE\Enums\MPSSEEndianness;
 use Microscrap\Bindings\MPSSE\Enums\MPSSEMode;
 use Microscrap\Bindings\MPSSE\Enums\MpsseSupportedDevice;
 use Microscrap\Bindings\MPSSE\MPSSEContext;
-use Microscrap\ScrapyardUSB\Digital\MpsseDigitalIOConnectionDriver;
 
 class MpsseI2CConnectionFactory extends I2CConnectionFactory
 {
@@ -66,14 +63,5 @@ class MpsseI2CConnectionFactory extends I2CConnectionFactory
         }
 
         return $context;
-    }
-
-    public function register(): I2CConnectionDriver
-    {
-        $handle = $this->getHandle();
-        /** @var MpsseDigitalIOConnectionDriver $driver */
-        $driver = DigitalIO::driver('usb');
-        $driver->register($this->device, $handle);
-        return $this->driver->register($this->device, $handle);
     }
 }
