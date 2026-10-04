@@ -65,7 +65,7 @@ Trait on every MPSSE transport. `transact($context, $live, $decode)`:
 
 # via()
 
-I2C and SPI drivers override `offload()`: a named target → `offloadTargetUnsupported`; null → queue per bridge (`queueKey` = device), `dispatch` creates the pump and runs `$job->run($slave)` in `$loop->async()`. One engine, one queue per bridge.
+I2C and SPI drivers override `offload()`: a named pool → `offloadPoolUnsupported`; null → queue per bridge (`queueKey` = device), `dispatch` creates the pump and runs `$job->run($slave)` in `$loop->async()`. One engine, one queue per bridge.
 
 # I2C
 

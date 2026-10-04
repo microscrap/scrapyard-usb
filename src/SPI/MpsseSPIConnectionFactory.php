@@ -6,7 +6,7 @@ use GeneralPurposeIO\Contracts\SPI\SPIEndianness;
 use GeneralPurposeIO\Contracts\SPI\SPIException;
 use GeneralPurposeIO\Contracts\SPI\SPIMode;
 use GeneralPurposeIO\SPI\SPIConnectionFactory;
-use Microscrap\Bindings\FTDI\Enums\FtdiVendorId;
+use Ftdi\FtdiVendorId;
 use Microscrap\Bindings\MPSSE\Enums\MPSSEClockRate;
 use Microscrap\Bindings\MPSSE\Enums\MPSSEEndianness;
 use Microscrap\Bindings\MPSSE\Enums\MPSSEMode;

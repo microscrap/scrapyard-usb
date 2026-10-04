@@ -38,14 +38,14 @@ final class FtdiLink implements MpsseLink
         if ($length > 0) {
             $exchange->read = ftdi_read_data_submit($ftdi, $length);
 
-            if ($exchange->read->handle === 0) {
+            if ($exchange->read === null) {
                 return $exchange->settle(false);            // nothing written yet: the chip never saw this transaction
             }
         }
 
         $exchange->write = ftdi_write_data_submit($ftdi, $recording->commands, strlen($recording->commands));
 
-        if ($exchange->write->handle === 0) {
+        if ($exchange->write === null) {
             if (! is_null($exchange->read)) {
                 ftdi_transfer_data_cancel($exchange->read);
             }

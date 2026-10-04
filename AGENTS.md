@@ -4,13 +4,13 @@
 
 ## Role
 
-The FTDI adapter for `scrapyard-io/framework` 0.9: the `usb` driver on the DigitalIO, I2C, SPI and UART managers, over `ext-ftdi` and the `microscrap/{ftdi,mpsse}` bindings. Depends on the `gpio/*` splits, never on the whole framework.
+The FTDI adapter for `scrapyard-io/framework` 0.10: the `usb` driver on the DigitalIO, I2C, SPI and UART managers, over `ext-ftdi` and the `microscrap/{ftdi,mpsse}` bindings. Depends on the `gpio/*` splits, never on the whole framework.
 
 ## Rules
 
 * One FTDI interface runs one engine: every MPSSE or UART open goes through `FtdiBridge`.
 * Once a context has a pump, every USB exchange on it goes through the pump (`RunsOnTheUsbPump::transact()` / `holdTheWire()`); nothing talks to that context around it.
-* Offloaded jobs stay in the process (libusb holds the device): loop fibers, never a named work target.
+* Offloaded jobs stay in the process (libusb holds the device): loop fibers, never a named worker pool.
 * Test suites stay hardware-free: scripted links and recorded MPSSE streams. A test that needs a board skips itself when none answers.
 * Prefer `is_null($var)` over `$var === null`.
 

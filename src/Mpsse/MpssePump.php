@@ -8,7 +8,7 @@ use LogicException;
 use Microscrap\Bindings\MPSSE\MPSSEContext;
 use Microscrap\Bindings\MPSSE\MPSSERecording;
 use Voyager\Contracts\IOPools\Loop;
-use Voyager\Contracts\IOPools\LoopTimer;
+use Voyager\Contracts\IOPools\LoopResources\Timer;
 use WeakMap;
 
 /**
@@ -34,7 +34,7 @@ final class MpssePump
 
     private ?MpsseExchange $inflight = null;
 
-    private ?LoopTimer $ticker = null;
+    private ?Timer $ticker = null;
 
     private function __construct(
         private readonly MPSSEContext $context,

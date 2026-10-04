@@ -27,8 +27,8 @@ There is no PWM driver.
 - libftdi1 and libusb-1.0:
   - Debian and Ubuntu: `apt install libftdi1-dev libusb-1.0-0-dev pkg-config`
   - macOS: `brew install libftdi`
-- [`ext-ftdi`](https://github.com/php-io-extensions/ftdi) 0.9: `pie install php-io-extensions/ftdi`
-- `scrapyard-io/framework` 0.9, or just the `gpio/*` components it is split into
+- [`ext-ftdi`](https://github.com/php-io-extensions/ftdi) 0.10: `pie install php-io-extensions/ftdi`
+- `scrapyard-io/framework` 0.10, or just the `gpio/*` components it is split into
 - On Linux, access to the USB device. For example, add `/etc/udev/rules.d/99-ftdi.rules`:
 
   ```

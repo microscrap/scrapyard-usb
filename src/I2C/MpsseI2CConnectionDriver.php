@@ -70,10 +70,10 @@ class MpsseI2CConnectionDriver extends I2CConnectionDriver
         parent::disconnect($device);
     }
 
-    public function offload(string|int $device, int $address, BusJob $job, ?string $target = null): Promise
+    public function offload(string|int $device, int $address, BusJob $job, ?string $pool = null): Promise
     {
-        if (! is_null($target)) {
-            throw I2CException::offloadTargetUnsupported($target);
+        if (! is_null($pool)) {
+            throw I2CException::offloadPoolUnsupported($pool);
         }
 
         return parent::offload($device, $address, $job);
@@ -84,7 +84,7 @@ class MpsseI2CConnectionDriver extends I2CConnectionDriver
         return (string) $device;
     }
 
-    protected function dispatch(string|int $device, int $address, BusJob $job, ?string $target, Loop $loop, BusQueue $queue): Promise
+    protected function dispatch(string|int $device, int $address, BusJob $job, ?string $pool, Loop $loop, BusQueue $queue): Promise
     {
         /** @var MPSSEContext $context */
         $context = $this->connections->get($device);

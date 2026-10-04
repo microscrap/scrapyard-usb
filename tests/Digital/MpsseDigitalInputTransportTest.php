@@ -5,11 +5,8 @@ use GeneralPurposeIO\Contracts\Digital\SignalEdge;
 use Microscrap\Bindings\MPSSE\MPSSEContext;
 use Microscrap\ScrapyardUSB\Digital\MpsseDigitalInputTransport;
 use Microscrap\ScrapyardUSB\Tests\Fixtures\ScriptedMpsseDigitalInputTransport;
-use Voyager\Contracts\IOPools\Event;
 use Voyager\Contracts\IOPools\Loop;
-use Voyager\Contracts\IOPools\MailCollection;
-use Voyager\Contracts\IOPools\Receivable;
-use Voyager\IOPools\EventLoop;
+use Voyager\Contracts\IOPools\MailHandler;
 
 function scriptedPin(array $levels, ?Loop $loop = null): ScriptedMpsseDigitalInputTransport
 {
@@ -19,15 +16,15 @@ function scriptedPin(array $levels, ?Loop $loop = null): ScriptedMpsseDigitalInp
     return is_null($loop) ? $pin : $pin->resolvesLoopWith(fn (): Loop => $loop);
 }
 
-function mailRecorder(): Receivable
+function mailRecorder(): MailHandler
 {
-    return new class implements Receivable {
-        /** @var list<Event> */
+    return new class implements MailHandler {
+        /** @var list<object> */
         public array $events = [];
 
-        public function handOff(MailCollection $mail): void
+        public function handOff(array $mail, Loop $loop): void
         {
-            foreach ($mail->mail() as $event) {
+            foreach ($mail as $event) {
                 $this->events[] = $event;
             }
         }
@@ -71,7 +68,7 @@ it('read() between samples never hides an edge', function () {
 
 it('a watched pin is sampled every pollEvery() ms and mails each change', function () {
     $mail = mailRecorder();
-    $loop = new EventLoop(null, 16, $mail);
+    $loop = testLoop($mail);
     $pin = scriptedPin([false, false, true, true, false], $loop)->pollEvery(2);
 
     $pin->watch();
@@ -83,7 +80,7 @@ it('a watched pin is sampled every pollEvery() ms and mails each change', functi
 });
 
 it('pollEvery() retimes a pin already on the loop', function () {
-    $loop = new EventLoop;
+    $loop = testLoop();
     $pin = scriptedPin([false], $loop)->pollEvery(50);
 
     $pin->watch();
@@ -95,7 +92,7 @@ it('pollEvery() retimes a pin already on the loop', function () {
 });
 
 it('listen() under a loop is paced by pollEvery(), not by its timeout', function () {
-    $loop = new EventLoop;
+    $loop = testLoop();
     $pin = scriptedPin([false, false, true], $loop)->pollEvery(2);
 
     $start = microtime(true);

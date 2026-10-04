@@ -7,8 +7,8 @@ use GeneralPurposeIO\Contracts\UART\FlowControl;
 use GeneralPurposeIO\Contracts\UART\StopBits;
 use GeneralPurposeIO\Contracts\UART\UARTException;
 use GeneralPurposeIO\UART\UARTConnectionFactory;
-use Microscrap\Bindings\FTDI\Enums\FtdiProductId;
-use Microscrap\Bindings\FTDI\Enums\FtdiVendorId;
+use Ftdi\FtdiProductId;
+use Ftdi\FtdiVendorId;
 
 class FtdiUARTConnectionFactory extends UARTConnectionFactory
 {
@@ -62,7 +62,7 @@ class FtdiUARTConnectionFactory extends UARTConnectionFactory
         // ftdi_new() allocates and initialises the context: a second ftdi_init() would leak its read buffer
         $context = ftdi_new();
 
-        if ($context->handle <= 0) {
+        if ($context === null) {
             throw UARTException::couldNotOpenUARTPort($this->device);
         }
 

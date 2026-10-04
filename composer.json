@@ -2,7 +2,7 @@
     "name": "microscrap/scrapyard-usb",
     "description": "USB connection drivers for the ScrapyardIO GPIO framework: MPSSE digital, I2C and SPI plus FTDI UART over ext-ftdi",
     "type": "library",
-    "version": "0.9.0",
+    "version": "0.10.0",
     "keywords": [
         "scrapyard-io",
         "gpio",
@@ -20,21 +20,20 @@
     ],
     "require": {
         "php": "^8.4|^8.5|^8.6",
-        "ext-ftdi": "^0.9.0",
-        "gpio/contracts": "^0.9.0",
-        "gpio/digital": "^0.9.0",
-        "gpio/i2c": "^0.9.0",
-        "gpio/nuts-and-bolts": "^0.9.0",
-        "gpio/spi": "^0.9.0",
-        "gpio/uart": "^0.9.0",
-        "microscrap/ftdi": "^0.9.0",
-        "microscrap/mpsse": "^0.9.0",
-        "venusian-voyager/nuts-and-bolts": "^0.9.0"
+        "ext-ftdi": "^0.10.0",
+        "gpio/contracts": "^0.10.0",
+        "gpio/digital": "^0.10.0",
+        "gpio/i2c": "^0.10.0",
+        "gpio/nuts-and-bolts": "^0.10.0",
+        "gpio/spi": "^0.10.0",
+        "gpio/uart": "^0.10.0",
+        "microscrap/mpsse": "^0.10.0",
+        "venusian-voyager/nuts-and-bolts": "^0.10.0"
     },
     "require-dev": {
         "pestphp/pest": "^4",
-        "venusian-voyager/config": "^0.9.0",
-        "venusian-voyager/vessel": "^0.9.0"
+        "venusian-voyager/config": "^0.10.0",
+        "venusian-voyager/vessel": "^0.10.0"
     },
     "autoload": {
         "psr-4": {
@@ -48,7 +47,7 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-main": "0.9.x-dev"
+            "dev-main": "0.10.x-dev"
         },
         "venusian": {
             "providers": [

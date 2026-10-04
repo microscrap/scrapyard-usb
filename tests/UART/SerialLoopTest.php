@@ -1,25 +1,24 @@
 <?php
 
 use GeneralPurposeIO\Contracts\UART\UARTReceived;
-use Voyager\Contracts\IOPools\MailCollection;
-use Voyager\Contracts\IOPools\Receivable;
-use Voyager\IOPools\EventLoop;
+use Voyager\Contracts\IOPools\Loop;
+use Voyager\Contracts\IOPools\MailHandler;
 
 beforeEach(fn () => forgetBridges());
 afterEach(fn () => forgetBridges());
 
 it('samples a watched port on its timer and mails what the chip sent', function () {
-    $mail = new class implements Receivable {
+    $mail = new class implements MailHandler {
         public array $events = [];
 
-        public function handOff(MailCollection $mail): void
+        public function handOff(array $mail, Loop $loop): void
         {
-            foreach ($mail->mail() as $event) {
+            foreach ($mail as $event) {
                 $this->events[] = $event;
             }
         }
     };
-    $loop = new EventLoop(null, 16, $mail);
+    $loop = testLoop($mail);
     [$port, $link] = scriptedUart($loop);
 
     $port->watch();
@@ -32,7 +31,7 @@ it('samples a watched port on its timer and mails what the chip sent', function 
 });
 
 it('a read in a fiber suspends while the chip is silent', function () {
-    $loop = new EventLoop;
+    $loop = testLoop();
     [$port, $link] = scriptedUart($loop);
     $order = [];
 
@@ -48,7 +47,7 @@ it('a read in a fiber suspends while the chip is silent', function () {
 });
 
 it('write() on the loop waits for the running send while other timers fire', function () {
-    $loop = new EventLoop;
+    $loop = testLoop();
     [$port, $link] = scriptedUart($loop);
     $port->write('first');
     $link->stuck = true;
@@ -65,15 +64,13 @@ it('write() on the loop waits for the running send while other timers fire', fun
 });
 
 it('stops sampling once unwatched', function () {
-    $loop = new EventLoop;
+    $loop = testLoop();
     [$port] = scriptedUart($loop);
 
     $port->watch();
     $loop->at(0.02, fn () => $port->unwatch());
     $loop->run();
 
-    $notebook = (new ReflectionProperty(EventLoop::class, 'notebook'))->getValue($loop);
-
-    expect((new ReflectionMethod(EventLoop::class, 'nextDue'))->invoke($loop))->toBeNull()
-        ->and($notebook->hasResources())->toBeFalse();
+    expect($loop->registry->soonestDue())->toBeNull()
+        ->and($loop->registry->hasWork())->toBeFalse();
 });

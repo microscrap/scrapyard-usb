@@ -5,10 +5,9 @@ use Microscrap\Bindings\MPSSE\MPSSERecording;
 use Microscrap\ScrapyardUSB\Mpsse\FtdiLink;
 use Microscrap\ScrapyardUSB\Mpsse\MpssePump;
 use Microscrap\ScrapyardUSB\Tests\Fixtures\ScriptedMpsseLink;
-use Voyager\IOPools\EventLoop;
 
 it('runs a nested exclusive() of the turn\'s holder at once, on the main stack and in a fiber', function () {
-    $loop = new EventLoop;
+    $loop = testLoop();
     $pump = MpssePump::for(new MPSSEContext, $loop, new ScriptedMpsseLink);
     $gate = new ArrayObject(['open' => false]);
     $log = [];
@@ -36,7 +35,7 @@ it('runs a nested exclusive() of the turn\'s holder at once, on the main stack a
 });
 
 it('lets a loop callback that needs the wire while the main stack waits for its turn ride that turn instead of deadlocking', function () {
-    $loop = new EventLoop;
+    $loop = testLoop();
     $pump = MpssePump::for(new MPSSEContext, $loop, new ScriptedMpsseLink);
     $gate = new ArrayObject(['open' => false]);
     $log = [];
@@ -60,7 +59,7 @@ it('lets a loop callback that needs the wire while the main stack waits for its 
 });
 
 it('carries a recording over its link and hands back the reply', function () {
-    $loop = new EventLoop;
+    $loop = testLoop();
     $link = new ScriptedMpsseLink;
     $link->replies = ["\x12\x34"];
     $pump = MpssePump::for(new MPSSEContext, $loop, $link);

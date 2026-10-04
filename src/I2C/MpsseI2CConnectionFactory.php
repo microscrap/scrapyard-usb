@@ -4,7 +4,7 @@ namespace Microscrap\ScrapyardUSB\I2C;
 
 use GeneralPurposeIO\Contracts\I2C\I2CException;
 use GeneralPurposeIO\I2C\I2CConnectionFactory;
-use Microscrap\Bindings\FTDI\Enums\FtdiVendorId;
+use Ftdi\FtdiVendorId;
 use Microscrap\Bindings\MPSSE\Enums\MPSSEClockRate;
 use Microscrap\Bindings\MPSSE\Enums\MPSSEEndianness;
 use Microscrap\Bindings\MPSSE\Enums\MPSSEMode;

@@ -1,7 +1,7 @@
 ---
 type: Concept
 title: Overview
-description: What scrapyard-usb 0.9 ships, where it sits, how the provider wires the four drivers together, how devices are named, and what rides the loop.
+description: What scrapyard-usb 0.10 ships, where it sits, how the provider wires the four drivers together, how devices are named, and what rides the loop.
 tags: [overview, provider, stack, drivers, ftdi]
 status: draft
 generated: { by: claude-opus-5-5/claude-code, at: "2026-09-25T23:00:00Z" }
@@ -23,7 +23,7 @@ ext-ftdi                         1:1 libftdi1 + libmpsse calls
       → scrapyard-io/framework (gpio/*)   managers, transports, loop and via() machinery
 ```
 
-Requires `gpio/{contracts,digital,i2c,spi,uart,nuts-and-bolts}` ^0.9 and `ext-ftdi` ^0.9. No PWM.
+Requires `gpio/{contracts,digital,i2c,spi,uart,nuts-and-bolts}` ^0.10, `microscrap/mpsse` ^0.10 and `ext-ftdi` ^0.10. No PWM.
 
 # Provider
 
@@ -53,4 +53,4 @@ Nothing here has an fd `stream_select` can watch: libusb completions arrive as w
 
 # via()
 
-MPSSE jobs never leave the process — libusb holds the device claim — so `via()` runs a job in a loop fiber against the real slave, and a named work target is refused (`offloadTargetUnsupported`). See [mpsse.md](/mpsse.md).
+MPSSE jobs never leave the process — libusb holds the device claim — so `via()` runs a job in a loop fiber against the real slave, and a named worker pool is refused (`offloadPoolUnsupported`). See [mpsse.md](/mpsse.md).

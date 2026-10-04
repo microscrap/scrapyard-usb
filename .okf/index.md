@@ -4,7 +4,7 @@ okf_version: "0.2"
 
 # microscrap/scrapyard-usb — knowledge bundle
 
-FTDI adapter for `scrapyard-io/framework` 0.9. Registers the `usb` driver on the DigitalIO, I2C, SPI and UART managers. MPSSE (via `microscrap/mpsse`) carries pins, I2C and SPI on one shared context per interface; the FTDI UART engine (via `microscrap/ftdi`) carries serial. Everything through `ext-ftdi` / libftdi1 / libusb.
+FTDI adapter for `scrapyard-io/framework` 0.10. Registers the `usb` driver on the DigitalIO, I2C, SPI and UART managers. MPSSE (via `microscrap/mpsse`) carries pins, I2C and SPI on one shared context per interface; the FTDI UART engine (ext-ftdi's own functions) carries serial. Everything through `ext-ftdi` / libftdi1 / libusb.
 
 Read this index first, then only the concepts the task needs. Every concept is `status: draft` until a human verifies it.
 

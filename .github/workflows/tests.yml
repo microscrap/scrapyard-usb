@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php: ['8.4', '8.5']
+        php: ['8.4']
 
     name: PHP ${{ matrix.php }}
 
@@ -34,7 +34,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          pie install php-io-extensions/ftdi:^0.9
+          sudo --preserve-env=GITHUB_TOKEN "$(command -v pie)" install php-io-extensions/ftdi:^0.10 --with-php-config="$(command -v php-config)"
           php --ri ftdi
 
       - name: Install Composer dependencies

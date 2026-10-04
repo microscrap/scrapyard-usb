@@ -12,12 +12,11 @@ use Microscrap\ScrapyardUSB\SPI\MpsseSPIConnectionDriver;
 use Microscrap\ScrapyardUSB\SPI\MpsseSPITransport;
 use Microscrap\ScrapyardUSB\Tests\Fixtures\ScriptedMpsseLink;
 use Voyager\Contracts\IOPools\Loop;
-use Voyager\IOPools\EventLoop;
 
 /** @return array{MPSSEContext, ScriptedMpsseLink, EventLoop} a recordable context whose pump runs over a scripted link */
 function pumpedSpi(): array
 {
-    $loop = new EventLoop;
+    $loop = testLoop();
     $ctx = recordableSpiContext();
     $link = new ScriptedMpsseLink;
     MpssePump::for($ctx, $loop, $link);
@@ -146,7 +145,7 @@ it('raises chip select again after a lost exchange, and sends the clock again wi
 });
 
 it('runs an offloaded job in a loop fiber against the real slave, and refuses a named work target', function () {
-    $loop = new EventLoop;
+    $loop = testLoop();
     $ctx = recordableSpiContext();
     $link = new ScriptedMpsseLink;
     $link->replies = ["\xEF\x40\x17"];

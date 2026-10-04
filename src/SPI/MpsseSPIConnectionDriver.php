@@ -83,10 +83,10 @@ class MpsseSPIConnectionDriver extends SPIConnectionDriver
         unset($this->clocks[$device]);
     }
 
-    public function offload(string|int $device, int $chip_select, BusJob $job, ?string $target = null): Promise
+    public function offload(string|int $device, int $chip_select, BusJob $job, ?string $pool = null): Promise
     {
-        if (! is_null($target)) {
-            throw SPIException::offloadTargetUnsupported($target);
+        if (! is_null($pool)) {
+            throw SPIException::offloadPoolUnsupported($pool);
         }
 
         return parent::offload($device, $chip_select, $job);
@@ -104,7 +104,7 @@ class MpsseSPIConnectionDriver extends SPIConnectionDriver
     }
 
     /** The job runs here, in a loop fiber, against the real slave; the pump carries its USB traffic. */
-    protected function dispatch(string|int $device, int $chip_select, BusJob $job, ?string $target, Loop $loop, BusQueue $queue): Promise
+    protected function dispatch(string|int $device, int $chip_select, BusJob $job, ?string $pool, Loop $loop, BusQueue $queue): Promise
     {
         MpssePump::for($this->connections->get($device), $loop);
 

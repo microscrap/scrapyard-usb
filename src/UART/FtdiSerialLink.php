@@ -16,9 +16,12 @@ final class FtdiSerialLink implements SerialLink
         public readonly FTDIContext $context,
     ) {}
 
+    /** Up to $max bytes; "" when none are waiting or the device is gone (then status() turns negative). */
     public function read(int $max): string
     {
-        return ftdi_read_data($this->context, $max);
+        $bytes = ftdi_read_data($this->context, $max);
+
+        return $bytes === false ? '' : $bytes;
     }
 
     public function status(): int
@@ -30,7 +33,7 @@ final class FtdiSerialLink implements SerialLink
     {
         $transfer = ftdi_write_data_submit($this->context, $bytes, strlen($bytes));
 
-        if ($transfer->handle === 0) {
+        if ($transfer === null) {
             return false;
         }
 

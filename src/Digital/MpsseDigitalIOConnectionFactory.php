@@ -4,7 +4,7 @@ namespace Microscrap\ScrapyardUSB\Digital;
 
 use GeneralPurposeIO\Contracts\Digital\DigitalIOException;
 use GeneralPurposeIO\Digital\DigitalIOConnectionFactory;
-use Microscrap\Bindings\FTDI\Enums\FtdiVendorId;
+use Ftdi\FtdiVendorId;
 use Microscrap\Bindings\MPSSE\Enums\MPSSEClockRate;
 use Microscrap\Bindings\MPSSE\Enums\MPSSEEndianness;
 use Microscrap\Bindings\MPSSE\Enums\MPSSEMode;
