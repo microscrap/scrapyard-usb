@@ -42,4 +42,4 @@ vendor/bin/pest
 
 # CI
 
-`.github/workflows/tests.yml`: ubuntu, PHP 8.4, apt `libftdi1-dev libusb-1.0-0-dev pkg-config`, `sudo pie install php-io-extensions/ftdi:^0.10` (the system extension dir is root's), `composer update --prefer-stable`, `vendor/bin/pest`. Resolves `gpio/*` and `microscrap/*` 0.10 from Packagist.
+`.github/workflows/tests.yml`: ubuntu, PHP 8.4, apt `libftdi1-dev libusb-1.0-0-dev pkg-config`, `sudo pie install php-io-extensions/ftdi:^0.11` (the system extension dir is root's), `composer update --prefer-stable`, `vendor/bin/pest`. Resolves `gpio/*` and `microscrap/*` 0.11 from Packagist.

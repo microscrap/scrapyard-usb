@@ -4,7 +4,7 @@
 
 ## Role
 
-The FTDI adapter for `scrapyard-io/framework` 0.10: the `usb` driver on the DigitalIO, I2C, SPI and UART managers, over `ext-ftdi` and the `microscrap/{ftdi,mpsse}` bindings. Depends on the `gpio/*` splits, never on the whole framework.
+The FTDI adapter for `scrapyard-io/framework` 0.11: the `usb` driver on the DigitalIO, I2C, SPI and UART managers, over `ext-ftdi` and the `microscrap/{ftdi,mpsse}` bindings. Depends on the `gpio/*` splits, never on the whole framework.
 
 ## Rules
 
